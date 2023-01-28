@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-# Setting up a new GitHub repository
+## Setting up a new GitHub repository
 
 (1) Register on github.com in case you have not done this already.
 (2) Initialize a new public repository for this assignment on GitHub.
@@ -21,3 +21,59 @@ understand the development history. You can do this either using Shell commands 
 choice.
 (4) In the HTML file that you submit, include the hyperlink to the project repository (e.g., https://github.
 com/yourUserName/yourProjectName)
+
+```{r}
+git_url <- 'https://github.com/chrisfor97/Assignment05cf'
+```
+## Getting to know the API
+(5) Visit the documentation website for the API provided by ticketmaster.com (see here). Familiarize yourself with the features and functionalities of the Ticketmaster Discovery API. Have a particular look at rate limits.
+Features of the Ticketmaster Discovery API: 
+* Searching events by keyword in a certain location (lat/long)
+* Getting events for a particular artist OR venue in a specific country/city/zip code/DMA/etc
+* Getting hi-res images for a particular event or artist.
+* Search events of a certain genre in a particular location for a certain promoter
+* rate limits: 5000 API calls per day and rate limitation of 5 requests per second
+    + increasing rate limit is also possible but specific conditions need to be fullfilled. However, for this Assignment, this is not necessary
+
+
+(6) Whithin the scope of this assignment, you do not have to request your own API key. Instead retrieve
+a valid key from the API Explorer. This API key enables you to perform the GET requests needed
+throughout this assignment. Even though this API key is not secret per se (it is publicly visible on the
+API Explorer website), please comply to the common secrecy practices discussed in the lecture and the
+tutorial: Treat the API key as a secret token. Your API key should neither appear in the code that you
+are submitting nor in your public GitHub repository.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

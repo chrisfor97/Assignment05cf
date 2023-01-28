@@ -358,8 +358,8 @@ ticketmaster.com API</h1>
 </div>
 
 
-<div id="setting-up-a-new-github-repository" class="section level1">
-<h1>Setting up a new GitHub repository</h1>
+<div id="setting-up-a-new-github-repository" class="section level2">
+<h2>Setting up a new GitHub repository</h2>
 <ol style="list-style-type: decimal">
 <li>Register on github.com in case you have not done this already.</li>
 <li>Initialize a new public repository for this assignment on
@@ -374,6 +374,42 @@ the development history. You can do this either using Shell commands or
 a Git GUI of your choice.</li>
 <li>In the HTML file that you submit, include the hyperlink to the
 project repository (e.g., <a href="https://github" class="uri">https://github</a>. com/yourUserName/yourProjectName)</li>
+</ol>
+<pre class="r"><code>git_url &lt;- &#39;https://github.com/chrisfor97/Assignment05cf&#39;</code></pre>
+</div>
+<div id="getting-to-know-the-api" class="section level2">
+<h2>Getting to know the API</h2>
+<ol start="5" style="list-style-type: decimal">
+<li>Visit the documentation website for the API provided by
+ticketmaster.com (see here). Familiarize yourself with the features and
+functionalities of the Ticketmaster Discovery API. Have a particular
+look at rate limits. Features of the Ticketmaster Discovery API:</li>
+</ol>
+<ul>
+<li>Searching events by keyword in a certain location (lat/long)</li>
+<li>Getting events for a particular artist OR venue in a specific
+country/city/zip code/DMA/etc</li>
+<li>Getting hi-res images for a particular event or artist.</li>
+<li>Search events of a certain genre in a particular location for a
+certain promoter</li>
+<li>rate limits: 5000 API calls per day and rate limitation of 5
+requests per second
+<ul>
+<li>increasing rate limit is also possible but specific conditions need
+to be fullfilled. However, for this Assignment, this is not
+necessary</li>
+</ul></li>
+</ul>
+<ol start="6" style="list-style-type: decimal">
+<li>Whithin the scope of this assignment, you do not have to request
+your own API key. Instead retrieve a valid key from the API Explorer.
+This API key enables you to perform the GET requests needed throughout
+this assignment. Even though this API key is not secret per se (it is
+publicly visible on the API Explorer website), please comply to the
+common secrecy practices discussed in the lecture and the tutorial:
+Treat the API key as a secret token. Your API key should neither appear
+in the code that you are submitting nor in your public GitHub
+repository.</li>
 </ol>
 </div>
 

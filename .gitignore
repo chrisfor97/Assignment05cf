@@ -1,2 +1,4 @@
 #ignore
 *api.py
+.Rproj.user
+*.Rproj

@@ -43,10 +43,89 @@ API Explorer website), please comply to the common secrecy practices discussed i
 tutorial: Treat the API key as a secret token. Your API key should neither appear in the code that you
 are submitting nor in your public GitHub repository.
 
+```{r}
+library(jsonlite)
+library(httr)
+library(tidyverse)
+library(rlist)
+```
+
+```{r}
+source('ticketmaster_api.R')
+```
+
+#Interacting with the API - the basics
+(7) Perform a first GET request, that searches for event venues in Germany (countryCode = "DE"). Extract the content from the response object and inspect the resulting list. Describe what you can see.
+```{r}
+tickets_de <- GET('https://app.ticketmaster.com/discovery/v2/venues', 
+                  query=list("apikey"=ticketmaster_key,
+                             "countryCode"="DE",
+                             "locale"="*")) %>% content
+
+tickets_de
+```
+```{r}
+ticketsde_length <- length(tickets_de$`_embedded`$venues)
+
+names <- vector("character", ticketsde_length)
+city <- vector("character", ticketsde_length)
+postal_Code <- vector("character", ticketsde_length)
+address <- vector("character", ticketsde_length)
+url <- vector("character", ticketsde_length)
+longitude <- numeric(ticketsde_length)
+latitude <- numeric(ticketsde_length)
+
+for(i in 1:ticketsde_length) {
+  if("name" %in% names(tickets_de[[i]])) {
+    names[i] <- tickets[[i]]$name
+  } else {
+    names[i] <- NA
+  }
+  if("city" %in% names(tickets_de[[i]])) {
+    city[i] <- tickets[[i]]$city$name
+  } else {
+    city[i] <- NA
+  }
+  if("postalCode" %in% names(tickets_de[[i]])) {
+    postal_Code[i] <- tickets[[i]]$postalCode
+  } else {
+    postal_Code[i] <- NA
+  }
+  if("address" %in% names(tickets_de[[i]])) {
+    address[i] <- tickets[[i]]$address$line1
+  } else {
+    address[i] <- NA
+  }
+  if("url" %in% names(tickets_de[[i]])) {
+    url[i] <- tickets[[i]]$url
+  } else {
+    url[i] <- NA
+  }
+  if("location" %in% names(tickets_de[[i]])) {
+    longitude[i] <- tickets[[i]]$location$longitude
+    latitude[i] <- tickets[[i]]$location$latitude
+  } else {
+    longitude[i] <- NA
+    latitude[i] <- NA
+  }
+}
+
+#store them in a data frame
+tickets_content_df <- data.frame(name = names,
+                                 city = city,
+                                 postalCode = postal_Code,
+                                 address = address,
+                                 url = url,
+                                 longitude = longitude,
+                                 latitude = latitude)
+
+print(tickets_content_df)
+
+```
 
 
 
-
+(8) Extract the name, the *city*, the *postalCode* and *address*, as well as the *url* and the *longitude* and *latitude* of the venues to a data frame. This data frame should have the following structure:
 
 
 

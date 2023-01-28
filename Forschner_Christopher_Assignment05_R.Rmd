@@ -9,3 +9,15 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+# Setting up a new GitHub repository
+
+(1) Register on github.com in case you have not done this already.
+(2) Initialize a new public repository for this assignment on GitHub.
+(3) For the following exercises of this assignment, follow the standard Git workflow (i.e., pull the latest
+version of the project to your local computer, then stage, commit, and push all the modifications that you
+make throughout the project). Every logical programming step should be well documented on GitHub
+with a meaningful commit message, so that other people (e.g., your course instructor) can follow and
+understand the development history. You can do this either using Shell commands or a Git GUI of your
+choice.
+(4) In the HTML file that you submit, include the hyperlink to the project repository (e.g., https://github.
+com/yourUserName/yourProjectName)

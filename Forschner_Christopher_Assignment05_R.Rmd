@@ -62,71 +62,45 @@ tickets_de <- GET('https://app.ticketmaster.com/discovery/v2/venues',
                              "countryCode"="DE",
                              "locale"="*")) %>% content
 
-tickets_de
+total_pages<-as.numeric(tickets_de$page$totalPages)
+pagesize<-as.numeric(tickets_de$page$size)
+
 ```
 ```{r}
-ticketsde_length <- length(tickets_de$`_embedded`$venues)
-
-names <- vector("character", ticketsde_length)
-city <- vector("character", ticketsde_length)
-postal_Code <- vector("character", ticketsde_length)
-address <- vector("character", ticketsde_length)
-url <- vector("character", ticketsde_length)
-longitude <- numeric(ticketsde_length)
-latitude <- numeric(ticketsde_length)
-
-for(i in 1:ticketsde_length) {
-  if("name" %in% names(tickets_de[[i]])) {
-    names[i] <- tickets[[i]]$name
-  } else {
-    names[i] <- NA
-  }
-  if("city" %in% names(tickets_de[[i]])) {
-    city[i] <- tickets[[i]]$city$name
-  } else {
-    city[i] <- NA
-  }
-  if("postalCode" %in% names(tickets_de[[i]])) {
-    postal_Code[i] <- tickets[[i]]$postalCode
-  } else {
-    postal_Code[i] <- NA
-  }
-  if("address" %in% names(tickets_de[[i]])) {
-    address[i] <- tickets[[i]]$address$line1
-  } else {
-    address[i] <- NA
-  }
-  if("url" %in% names(tickets_de[[i]])) {
-    url[i] <- tickets[[i]]$url
-  } else {
-    url[i] <- NA
-  }
-  if("location" %in% names(tickets_de[[i]])) {
-    longitude[i] <- tickets[[i]]$location$longitude
-    latitude[i] <- tickets[[i]]$location$latitude
-  } else {
-    longitude[i] <- NA
-    latitude[i] <- NA
-  }
+#define a function for requesting data
+requester <-function(page){
+  #enforce a rate limit
+  Sys.sleep(0.2)
+  #call the api an get the respective page
+  requ_page <- tickets_de <- GET('https://app.ticketmaster.com/discovery/v2/venues', 
+                  query=list("apikey"=ticketmaster_key,
+                             "countryCode"="DE",
+                             "locale"="*")) %>% content
+  #return the search items in a list
+  requ_page <-requ_page$`_embedded`$venues
 }
 
-#store them in a data frame
-tickets_content_df <- data.frame(name = names,
-                                 city = city,
-                                 postalCode = postal_Code,
-                                 address = address,
-                                 url = url,
-                                 longitude = longitude,
-                                 latitude = latitude)
-
-print(tickets_content_df)
 
 ```
-
 
 
 (8) Extract the name, the *city*, the *postalCode* and *address*, as well as the *url* and the *longitude* and *latitude* of the venues to a data frame. This data frame should have the following structure:
+```{r}
+tickets_de2 <-requester(0)
+#exctract variable names 
+tickets_df1<-map(tickets_de2,~.x)
+varnames=colnames(tickets_df1)
+```
 
+```{r}
+tickets_df1 <- map(tickets_de2, as.data.frame) %>%
+  map(~ complete(tibble(.x),)) %>%
+  bind_rows() %>% select(c('name','name.1','line1','location.longitude','location.latitude','url','postalCode'))
+tickets_df1 <- tickets_df1%>%rename(city = name.1, 
+                                    address = line1, 
+                                    latitude = location.latitude, 
+                                    longitude = location.longitude)
+```
 
 
 

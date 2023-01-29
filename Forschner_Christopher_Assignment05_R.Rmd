@@ -60,26 +60,29 @@ source('ticketmaster_api.R')
 tickets_de <- GET('https://app.ticketmaster.com/discovery/v2/venues', 
                   query=list("apikey"=ticketmaster_key,
                              "countryCode"="DE",
-                             "locale"="*")) %>% content
+                             "locale"="*",
+                             'size'=499)) %>% content
 
 total_pages<-as.numeric(tickets_de$page$totalPages)
 pagesize<-as.numeric(tickets_de$page$size)
+elements<-as.numeric(tickets_de$page$totalElements)
 
 ```
 ```{r}
 #define a function for requesting data
-requester <-function(page){
+requester <-function(pages){
   #enforce a rate limit
   Sys.sleep(0.2)
   #call the api an get the respective page
   requ_page <- tickets_de <- GET('https://app.ticketmaster.com/discovery/v2/venues', 
                   query=list("apikey"=ticketmaster_key,
                              "countryCode"="DE",
-                             "locale"="*")) %>% content
+                             "locale"="*",
+                             'page'=pages,
+                             'size'=499)) %>% content #increasing to 499 per page so every element can be caught
   #return the search items in a list
   requ_page <-requ_page$`_embedded`$venues
 }
-
 
 ```
 
@@ -88,28 +91,112 @@ requester <-function(page){
 ```{r}
 tickets_de2 <-requester(0)
 #exctract variable names 
+empty_df_list <- list()
+for (i in 1:20){
+  empty_df_list[[i]]<-data.frame()
+}
+empty_df_list[[1]]<-map(tickets_de2[[1]],~.x)%>% data.frame()
+for(i in 2:20){
+  empty_df_list[[i]]<-map(tickets_de2[[i]],~.x)%>% data.frame()
+}
+
+empty_df<-list.stack(empty_df_list,fill=TRUE)
 tickets_df1<-map(tickets_de2,~.x)
 varnames=colnames(tickets_df1)
+
+
+total_pages<-as.numeric(tickets_de$page$totalPages)
+pagesize<-as.numeric(tickets_de$page$size)
 ```
 
 ```{r}
 tickets_df1 <- map(tickets_de2, as.data.frame) %>%
-  map(~ complete(tibble(.x),)) %>%
-  bind_rows() %>% select(c('name','name.1','line1','location.longitude','location.latitude','url','postalCode'))
-tickets_df1 <- tickets_df1%>%rename(city = name.1, 
-                                    address = line1, 
-                                    latitude = location.latitude, 
-                                    longitude = location.longitude)
+  map(~ complete(tibble(.x),)) %>% #replaces missing columns with a NA
+  bind_rows() %>% 
+  select(c('name','name.1','line1','location.longitude','location.latitude','url','postalCode'))%>%
+  rename(city = name.1,
+         address = line1,
+         latitude = location.latitude,
+         longitude = location.longitude)
 ```
 
 
+## Interacting with the API - advanced
+(9) Have a closer look at the list element named page. Did your GET request from exercise (7) return all
+event locations in Germany? Obviously not - there are of course much more venues in Germany than
+those contained in this list. Your GET request only yielded the first results page containing the first
+20 out of several thousands of venues. Check the API documentation under the section Venue Search.
+How can you request the venues from the remaining results pages? Iterate over the results pages and
+perform GET requests for all venues in Germany. After each iteration, extract the seven variables name,
+city, postalCode, address, url, longitude, and latitude. Join the information in one large
+data frame. Print the first 10 rows and the shape of the resulting data frame. The resulting data frame
+should look something like this (note that the exact number of search results may have changed since
+this document has been last modified):
+
+```{r}
+#get all pages for venues in Germany
+venueslist_de<-map(0:total_pages,requester)
+
+venueslist_de2<-venueslist_de[-which(sapply(venueslist_de, is.null))] #removing all list entries where list type is null
+de_length<-as.numeric(length(venueslist_de2))
+```
+```{r}
+empty_df_list <- list()
 
 
 
 
+```
+
+```{r}
+length(venueslist_de) 
+elementno <- c()
+for (i in 1:length(venueslist_de2)){
+  elementno[i]<-length(venueslist_de2[[i]])
+}
+sum(elementno)
+```
+
+```{r}
+#get all pages for venues in Germany
+venueslist_de<-map(0:total_pages,requester)
+
+venueslist_de2<-venueslist_de[-which(sapply(venueslist_de, is.null))] #removing all list entries where list type is null
+de_length<-as.numeric(length(venueslist_de2))
+#dropped the 26th page, because it caused Problems I could not find a solution for
+venueslist_de3<-venueslist_de2[-26]
+for (i in 1:25){
+  venues_df2<-map(venueslist_de3[[i]], as.data.frame) %>%
+  map(~ complete(tibble(.x),)) %>% #replaces missing columns with a NA
+  bind_rows()%>% 
+  select(c('name','name.1','line1','location.longitude','location.latitude','url','postalCode'))%>%
+  rename(city = name.1,
+         address = line1,
+         latitude = location.latitude,
+         longitude = location.longitude)
+  venues_df<-rbind(venues_df,venues_df2) 
+}
+venues_df<-venues_df%>% distinct()
+head(venues_df)
+  
+  
 
 
+```
+# Visualizing the extracted data
 
+(10) Below, you can find code that produces a map of Germany. Add points to the map indicating the
+locations of the event venues across Germany.
+```{r}
+ggplot() +
+borders("world", "Germany", colour = "black", fill = "grey90") +
+theme_void() +
+coord_quickmap() +
+labs(title = "Event locations across Germany",
+caption = "Source: ticketmaster.com") +
+theme(title = element_text(size=8, face='bold'),
+plot.caption = element_text(face = "italic"))
+```
 
 
 

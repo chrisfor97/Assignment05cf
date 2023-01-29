@@ -126,30 +126,69 @@ venueslist_de<-map(0:total_pages,requester)
 venueslist_de2<-venueslist_de[-which(sapply(venueslist_de, is.null))] #removing all list entries where list type is null
 de_length<-as.numeric(length(venueslist_de2))
 #dropped the 26th page, because it caused Problems I could not find a solution for
-venueslist_de3<-venueslist_de2[-26]
-venues_df<-data.frame()
-for (i in 1:25){
-  venues_df2<-map(venueslist_de3[[i]], as.data.frame) %>%
-  map(~ complete(tibble(.x),)) %>% #replaces missing columns with a NA
-  bind_rows()%>% 
-  select(c('name','name.1','line1','location.longitude','location.latitude','url','postalCode'))%>%
-  rename(city = name.1,
-         address = line1,
-         latitude = location.latitude,
-         longitude = location.longitude)
-  venues_df<-rbind(venues_df,venues_df2) 
+
+
+venues_de_df<-data.frame()
+for (p in 1:de_length){
+  elements<-as.numeric(length(venueslist_de2[[p]]))
+  names<-vector("list",elements)
+  city<-vector("list",elements)
+  postal_Code<-vector("list",elements)
+  url <-vector("list",elements)
+  latitude<-vector("list",elements)
+  longitude<-vector("list",elements)
+  address<-vector("list",elements)
+  for(e in 1:elements){
+    if (venueslist_de2[[p]][[e]]$name %in% venueslist_de2[[p]][[e]]){
+      names[e]<-venueslist_de2[[p]][[e]]$name}
+    else{names[e]<-NA}
+    
+    if (!is.null(venueslist_de2[[p]][[e]]$postalCode)){
+    postal_Code[e]<-venueslist_de2[[p]][[e]]$postalCode} 
+    else{postal_Code[e]<-NA}
+    
+    if (!is.null(venueslist_de2[[p]][[e]]$url)){
+    url[e]<-venueslist_de2[[p]][[e]]$url}
+    else{url[e]<-NA}
+    
+    if (!is.null(venueslist_de2[[p]][[e]]$location)){
+    longitude[e]<-venueslist_de2[[p]][[e]]$location$longitude
+    latitude[e]<-venueslist_de2[[p]][[e]]$location$latitude}
+    else{longitude[e]<-NA
+      latitude[e]<-NA}
+    
+    if (!is.null(venueslist_de2[[p]][[e]]$city)){
+    city[e]<-venueslist_de2[[p]][[e]]$city$name}
+    else{city[e]<-NA}
+    
+    if (!is.null(venueslist_de2[[p]][[e]]$address)){
+    if (!is.null(venueslist_de2[[p]][[e]]$address$line1)){
+      address[e]<-venueslist_de2[[p]][[e]]$address$line1}
+    else{address[e]<-NA}}
+    else{address[e]<-NA}
+    
+  } 
+  venues_de_df2<-data.frame(unlist(names),unlist(postal_Code),unlist(city),unlist(longitude),unlist(latitude),unlist(url),unlist(address))
+  venues_de_df<-rbind(venues_de_df,venues_de_df2)
 }
-venues_df<-venues_df%>% distinct()
-venues_df$latitude<-venues_df$latitude  %>% as.numeric()
-venues_df$longitude<-venues_df$longitude  %>% as.numeric()
-head(venues_df)
+venues_de_df<-venues_de_df %>%rename(name=unlist.names.,
+         city=unlist.city.,
+         postalCode=unlist.postal_Code.,
+         adress=unlist.address.,
+         longitude=unlist.longitude.,
+         latitude=unlist.latitude.,
+         url=unlist.url.)
+
+venues_de_df$latitude<-venues_de_df$latitude  %>% as.numeric()
+venues_de_df$longitude<-venues_de_df$longitude  %>% as.numeric()
+head(venues_de_df)
 ```
 # Visualizing the extracted data
 
 (10) Below, you can find code that produces a map of Germany. Add points to the map indicating the
 locations of the event venues across Germany.
 ```{r}
-ggplot(data = venues_df) +
+ggplot(data = venues_de_df) +
   borders("world", "Germany", colour = "black", fill = "grey90") +
   theme_void() +
   coord_quickmap() +
@@ -165,16 +204,16 @@ where the value of latitude is outside the range (47.270, 55.059) (these coordin
 been derived from the extreme points of Germany as listed on Wikipedia (see here). For extreme points
 of other countries, see here).
 ```{r}
-venues_df2<-venues_df
-venues_df2$longitude[venues_df2$longitude>15.042]<-NA
-venues_df2$longitude[venues_df2$longitude<5.886]<-NA
-venues_df2$latitude[venues_df2$latitude>55.059]<-NA
-venues_df2$latitude[venues_df2$latitude<47.270]<-NA
-venues_df2
+venues_de_df2<-venues_de_df
+venues_de_df2$longitude[venues_de_df2$longitude>15.042]<-NA
+venues_de_df2$longitude[venues_de_df2$longitude<5.886]<-NA
+venues_de_df2$latitude[venues_de_df2$latitude>55.059]<-NA
+venues_de_df2$latitude[venues_de_df2$latitude<47.270]<-NA
+venues_de_df2
 
 ```
 ```{r}
-ggplot(data = venues_df2) +
+ggplot(data = venues_de_df2) +
   borders("world", "Germany", colour = "black", fill = "grey90") +
   theme_void() +
   coord_quickmap() +
@@ -189,15 +228,159 @@ ggplot(data = venues_df2) +
 (12) Repeat exercises (9)–(11) for another European country of your choice. (Hint: Clean code pays off! If
 you have coded the exercises efficiently, only very few adaptions need to be made.)
 
+My country of Choice: Switzerland
+```{r}
+#adjust the requester function
+requester2 <-function(pages){
+  #enforce a rate limit
+  Sys.sleep(0.2)
+  #call the api an get the respective page
+  requ_page <- tickets_de <- GET('https://app.ticketmaster.com/discovery/v2/venues', 
+                  query=list("apikey"=ticketmaster_key,
+                             "countryCode"="CH",
+                             "locale"="*",
+                             'page'=pages,
+                             "size"=499)) %>% content #increasing to 499 per page so every element can be caught
+  #return the search items in a list
+  requ_page <-requ_page$`_embedded`$venues
+}
+```
+```{r}
+#getting an overview over the data
+tickets_ch <- GET('https://app.ticketmaster.com/discovery/v2/venues', 
+                  query=list("apikey"=ticketmaster_key,
+                             "countryCode"="CH",
+                             "locale"="*",
+                             'size'=499)) %>% content
 
+total_pages_ch<-as.numeric(tickets_ch$page$totalPages)
+elements_ch<-as.numeric(tickets_ch$page$totalElements)
+```
+```{r}
+#get all pages for venues in Germany
+venueslist_ch<-map(0:total_pages_ch,requester2)
 
+venueslist_ch2<-venueslist_ch[-which(sapply(venueslist_ch, is.null))] #removing all list entries where list type is null
+ch_length<-as.numeric(length(venueslist_ch2))
+#dropped the 26th page, because it caused Problems I could not find a solution for
+#venueslist_de3<-venueslist_de2[-26]
+venuesch_df<-data.frame()
+length_ch<-length(venueslist_ch2[[1]])
+venueslist_ch3<-venueslist_ch2[[1]]
+head(venues_df)
+```
+```{r}
+names<-vector("list",elements_ch)
+city<-vector("list",elements_ch)
+postal_Code<-vector("list",elements_ch)
+url <-vector("list",elements_ch)
+latitude<-vector("list",elements_ch)
+longitude<-vector("list",elements_ch)
+address<-vector("list",elements_ch)
+venueslist_ch3[[1]]
 
+for (i in 1:elements_ch){
+if (venueslist_ch3[[i]]$name %in% venueslist_ch3[[i]]){
+  names[i]<-venueslist_ch3[[i]]$name
+} else{
+  names[i]<-NA
+}}
 
+for (i in 1:elements_ch) {
+  if (!is.null(venueslist_ch3[[i]]$postalCode)){
+    postal_Code[i]<-venueslist_ch3[[i]]$postalCode} 
+  else{postal_Code[i]<-NA}}
 
+for (i in 1:elements_ch) {
+  if (!is.null(venueslist_ch3[[i]]$url)){
+    url[i]<-venueslist_ch3[[i]]$url}
+  else{
+    url[i]<-NA}}
 
+for (i in 1:elements_ch) {
+  if (!is.null(venueslist_ch3[[i]]$location)){
+    longitude[i]<-venueslist_ch3[[i]]$location$longitude
+    latitude[i]<-venueslist_ch3[[i]]$location$latitude}
+  else{
+    longitude[i]<-NA
+    latitude[i]<-NA}}
 
+for (i in 1:elements_ch) {
+  if (!is.null(venueslist_ch3[[i]]$city)){
+    city[i]<-venueslist_ch3[[i]]$city$name}
+  else{
+    city[i]<-NA
+  }
+}
 
+for (i in 1:elements_ch) {
+  if (!is.null(venueslist_ch3[[i]]$city)){
+    city[i]<-venueslist_ch3[[i]]$city$name}
+  else{
+    city[i]<-NA
+  }
+}
+for (i in 1:elements_ch) {
+  if (!is.null(venueslist_ch3[[i]]$address)){
+    if (!is.null(venueslist_ch3[[i]]$address$line1)){
+      address[i]<-venueslist_ch3[[i]]$address$line1}
+    else{address[i]<-NA}  
+    }
+    
+  else{
+    address[i]<-NA
+  }
+}
+venues_ch_df<-data.frame(unlist(names),
+                         unlist(city),
+                         unlist(postal_Code),
+                         unlist(address),
+                         unlist(longitude),
+                         unlist(latitude),
+                         unlist(url))
+venues_ch_df<-venues_ch_df %>%rename(name=unlist.names.,
+         city=unlist.city.,
+         postalCode=unlist.postal_Code.,
+         adress=unlist.address.,
+         longitude=unlist.longitude.,
+         latitude=unlist.latitude.,
+         url=unlist.url.)
+venues_ch_df$longitude<-as.numeric(venues_ch_df$longitude)
+venues_ch_df$latitude<-as.numeric(venues_ch_df$latitude)
+head(venues_ch_df)                    
+```
 
+```{r}
+ggplot(data = venues_ch_df) +
+  borders("world", "Switzerland", colour = "black", fill = "grey90") +
+  theme_void() +
+  coord_quickmap() +
+  geom_point(mapping = aes(x=longitude,y=latitude))+
+  labs(title = "Event locations across Switzerland",
+       caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))
+```
+
+```{r}
+venues_ch_df2<-venues_ch_df
+venues_ch_df2$longitude[venues_ch_df2$longitude>10.29]<-NA
+venues_ch_df2$longitude[venues_ch_df2$longitude<5.57]<-NA
+venues_ch_df2$latitude[venues_ch_df2$latitude>47.48]<-NA
+venues_ch_df2$latitude[venues_ch_df2$latitude<45.49]<-NA
+venues_ch_df2
+```
+```{r}
+ggplot(data = venues_ch_df2) +
+  borders("world", "Switzerland", colour = "black", fill = "grey90") +
+  theme_void() +
+  coord_quickmap() +
+  geom_point(mapping = aes(x=longitude,y=latitude))+
+  labs(title = "Event locations across Switzerland",
+       caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))
+```
 
 
 

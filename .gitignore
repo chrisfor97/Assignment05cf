@@ -4,3 +4,4 @@
 *.Rproj
 *api.R
 *R.hmtl
+.Rhistory

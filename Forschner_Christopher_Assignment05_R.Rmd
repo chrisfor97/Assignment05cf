@@ -91,22 +91,8 @@ requester <-function(pages){
 ```{r}
 tickets_de2 <-requester(0)
 #exctract variable names 
-empty_df_list <- list()
-for (i in 1:20){
-  empty_df_list[[i]]<-data.frame()
-}
-empty_df_list[[1]]<-map(tickets_de2[[1]],~.x)%>% data.frame()
-for(i in 2:20){
-  empty_df_list[[i]]<-map(tickets_de2[[i]],~.x)%>% data.frame()
-}
-
-empty_df<-list.stack(empty_df_list,fill=TRUE)
 tickets_df1<-map(tickets_de2,~.x)
 varnames=colnames(tickets_df1)
-
-
-total_pages<-as.numeric(tickets_de$page$totalPages)
-pagesize<-as.numeric(tickets_de$page$size)
 ```
 
 ```{r}
@@ -139,32 +125,9 @@ venueslist_de<-map(0:total_pages,requester)
 
 venueslist_de2<-venueslist_de[-which(sapply(venueslist_de, is.null))] #removing all list entries where list type is null
 de_length<-as.numeric(length(venueslist_de2))
-```
-```{r}
-empty_df_list <- list()
-
-
-
-
-```
-
-```{r}
-length(venueslist_de) 
-elementno <- c()
-for (i in 1:length(venueslist_de2)){
-  elementno[i]<-length(venueslist_de2[[i]])
-}
-sum(elementno)
-```
-
-```{r}
-#get all pages for venues in Germany
-venueslist_de<-map(0:total_pages,requester)
-
-venueslist_de2<-venueslist_de[-which(sapply(venueslist_de, is.null))] #removing all list entries where list type is null
-de_length<-as.numeric(length(venueslist_de2))
 #dropped the 26th page, because it caused Problems I could not find a solution for
 venueslist_de3<-venueslist_de2[-26]
+venues_df<-data.frame()
 for (i in 1:25){
   venues_df2<-map(venueslist_de3[[i]], as.data.frame) %>%
   map(~ complete(tibble(.x),)) %>% #replaces missing columns with a NA
@@ -177,29 +140,54 @@ for (i in 1:25){
   venues_df<-rbind(venues_df,venues_df2) 
 }
 venues_df<-venues_df%>% distinct()
+venues_df$latitude<-venues_df$latitude  %>% as.numeric()
+venues_df$longitude<-venues_df$longitude  %>% as.numeric()
 head(venues_df)
-  
-  
-
-
 ```
 # Visualizing the extracted data
 
 (10) Below, you can find code that produces a map of Germany. Add points to the map indicating the
 locations of the event venues across Germany.
 ```{r}
-ggplot() +
-borders("world", "Germany", colour = "black", fill = "grey90") +
-theme_void() +
-coord_quickmap() +
-labs(title = "Event locations across Germany",
-caption = "Source: ticketmaster.com") +
-theme(title = element_text(size=8, face='bold'),
-plot.caption = element_text(face = "italic"))
+ggplot(data = venues_df) +
+  borders("world", "Germany", colour = "black", fill = "grey90") +
+  theme_void() +
+  coord_quickmap() +
+  geom_point(mapping = aes(x=longitude,y=latitude))+
+  labs(title = "Event locations across Germany",
+       caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))
 ```
+(11) You will find that some coordinates lie way beyond the German borders and can be assumed to be faulty.
+Set coordinate values to NA where the value of longitude is outside the range (5.866, 15.042) or
+where the value of latitude is outside the range (47.270, 55.059) (these coordinate ranges have
+been derived from the extreme points of Germany as listed on Wikipedia (see here). For extreme points
+of other countries, see here).
+```{r}
+venues_df2<-venues_df
+venues_df2$longitude[venues_df2$longitude>15.042]<-NA
+venues_df2$longitude[venues_df2$longitude<5.886]<-NA
+venues_df2$latitude[venues_df2$latitude>55.059]<-NA
+venues_df2$latitude[venues_df2$latitude<47.270]<-NA
+venues_df2
 
+```
+```{r}
+ggplot(data = venues_df2) +
+  borders("world", "Germany", colour = "black", fill = "grey90") +
+  theme_void() +
+  coord_quickmap() +
+  geom_point(mapping = aes(x=longitude,y=latitude))+
+  labs(title = "Event locations across Germany",
+       caption = "Source: ticketmaster.com") +
+  theme(title = element_text(size=8, face='bold'),
+        plot.caption = element_text(face = "italic"))
 
-
+```
+## Event locations in other countries
+(12) Repeat exercises (9)–(11) for another European country of your choice. (Hint: Clean code pays off! If
+you have coded the exercises efficiently, only very few adaptions need to be made.)
 
 
 

@@ -88,7 +88,7 @@ requester <-function(pages){
 }
 
 ```
-
+different to python I changed the page size from the beginning. However, instead of a nested dictionary we have a nested list here in R. The number of elements stays the same.
 
 (8) Extract the name, the *city*, the *postalCode* and *address*, as well as the *url* and the *longitude* and *latitude* of the venues to a data frame. This data frame should have the following structure:
 ```{r}
@@ -108,7 +108,11 @@ tickets_df1 <- map(tickets_de2, as.data.frame) %>% #map them in a list
          latitude = location.latitude,
          longitude = location.longitude)
 ```
-
+```{r}
+#show the first 20 entries
+tickets_df2<-head(tickets_df1,20)
+tickets_df2
+```
 
 ## Interacting with the API - advanced
 (9) Have a closer look at the list element named page. Did your GET request from exercise (7) return all
@@ -191,7 +195,7 @@ venues_de_df<-venues_de_df %>%rename(name=unlist.names., #renaming
 
 venues_de_df$latitude<-venues_de_df$latitude  %>% as.numeric() #transform latitude and longitude 
 venues_de_df$longitude<-venues_de_df$longitude  %>% as.numeric()#in numerics
-head(venues_de_df)
+head(venues_de_df,10)
 ```
 # Visualizing the extracted data
 
